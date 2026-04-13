@@ -1,0 +1,21 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Map {
+  id            String   @id @default(uuid())
+  name          String
+  width         Int?
+  height        Int?
+  status        String   @default("processing")
+  maxNativeZoom Int?
+  calibration   Json?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
