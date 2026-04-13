@@ -20,6 +20,8 @@ if (!fs.existsSync(uploaddir)) {
       storage: diskStorage({
         destination: uploaddir,
         filename: (req, file, cb) => {
+          // Fix encoding for Vietnamese characters
+          file.originalname = Buffer.from(file.originalname, 'latin1').toString('utf8');
           const ext = extname(file.originalname);
           const filename = `${uuidv4()}${ext}`;
           cb(null, filename);
