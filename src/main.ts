@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    origin: ['http://map.nguyenkhoi.io.vn'],
+    origin: ['https://map.nguyenkhoi.io.vn'],
     credentials: true,
   });
   app.setGlobalPrefix('api');
