@@ -19,3 +19,50 @@ model Map {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String?
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DocumentSection {
+  id        String     @id @default(uuid())
+  roman     String
+  title     String
+  subtitle  String?
+  accent    String     @default("emerald")
+  items     Document[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model Document {
+  id         String          @id @default(uuid())
+  title      String
+  type       String          // "pdf", "video", "drawing", "doc", "word"
+  classified Boolean         @default(false)
+  url        String?
+  sectionId  String
+  section    DocumentSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([sectionId])
+}
+
+model Vehicle {
+  id        String   @id // e.g. "HPK-2.5", "TPK", "KH-1", etc.
+  name      String
+  desc      String?
+  l         Float
+  r         Float
+  t         Float
+  materials String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
