@@ -15,9 +15,12 @@ model Map {
   status        String   @default("processing")
   maxNativeZoom Int?
   calibration   Json?
-  
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model User {
@@ -26,6 +29,7 @@ model User {
   password  String
   name      String?
   role      String   @default("user")
+  maps      Map[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -35,7 +39,6 @@ model DocumentSection {
   roman     String
   title     String
   subtitle  String?
-  accent    String     @default("emerald")
   items     Document[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
@@ -47,6 +50,7 @@ model Document {
   type       String          // "pdf", "video", "drawing", "doc", "word"
   classified Boolean         @default(false)
   url        String?
+  order      Int             @default(0)
   sectionId  String
   section    DocumentSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   createdAt  DateTime        @default(now())

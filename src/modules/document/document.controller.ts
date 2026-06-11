@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param } from '@nestjs/common';
 import { DocumentService } from './document.service';
 
 @Controller('documents')
@@ -23,6 +23,14 @@ export class DocumentController {
   @Delete('sections/:id')
   removeSection(@Param('id') id: string) {
     return this.documentService.removeSection(id);
+  }
+
+  @Patch('sections/:sectionId/reorder')
+  reorderDocuments(
+    @Param('sectionId') sectionId: string,
+    @Body() body: { orderedIds: string[] },
+  ) {
+    return this.documentService.reorderDocuments(sectionId, body.orderedIds);
   }
 
   @Post()

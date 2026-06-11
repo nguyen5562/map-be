@@ -8,7 +8,9 @@ export class DocumentService {
   async getSections() {
     return this.prisma.documentSection.findMany({
       include: {
-        items: true,
+        items: {
+          orderBy: { order: 'asc' },
+        },
       },
       orderBy: { roman: 'asc' },
     });
@@ -20,7 +22,6 @@ export class DocumentService {
         roman: data.roman,
         title: data.title,
         subtitle: data.subtitle,
-        accent: data.accent || 'emerald',
       },
     });
   }
@@ -32,7 +33,6 @@ export class DocumentService {
         roman: data.roman,
         title: data.title,
         subtitle: data.subtitle,
-        accent: data.accent,
       },
     });
   }
@@ -44,12 +44,21 @@ export class DocumentService {
   }
 
   async createDocument(data: any) {
+    // Assign order = max current order + 1 within the section
+    const maxOrderDoc = await this.prisma.document.findFirst({
+      where: { sectionId: data.sectionId },
+      orderBy: { order: 'desc' },
+      select: { order: true },
+    });
+    const nextOrder = (maxOrderDoc?.order ?? -1) + 1;
+
     return this.prisma.document.create({
       data: {
         title: data.title,
         type: data.type,
         classified: data.classified || false,
         url: data.url,
+        order: nextOrder,
         sectionId: data.sectionId,
       },
     });
@@ -66,6 +75,19 @@ export class DocumentService {
         sectionId: data.sectionId,
       },
     });
+  }
+
+  async reorderDocuments(sectionId: string, orderedIds: string[]) {
+    // Update each document's order field based on its index in the array
+    await Promise.all(
+      orderedIds.map((id, index) =>
+        this.prisma.document.update({
+          where: { id },
+          data: { order: index },
+        }),
+      ),
+    );
+    return { success: true };
   }
 
   async removeDocument(id: string) {

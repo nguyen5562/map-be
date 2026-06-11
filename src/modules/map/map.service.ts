@@ -16,7 +16,16 @@ export class MapService {
     }
   }
 
-  async getAllMaps() {
+  async getAllMaps(userId?: string) {
+    if (userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user && user.role !== 'admin') {
+        return this.prisma.map.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' }
+        });
+      }
+    }
     return this.prisma.map.findMany({
       orderBy: { createdAt: 'desc' }
     });
@@ -28,7 +37,7 @@ export class MapService {
     });
   }
 
-  async processUploadedMap(file: Express.Multer.File) {
+  async processUploadedMap(file: Express.Multer.File, userId?: string) {
     const mapId = file.filename.split('.')[0];
     const name = file.originalname;
 
@@ -37,6 +46,7 @@ export class MapService {
         id: mapId,
         name,
         status: 'processing',
+        userId: userId || null,
       }
     });
 
@@ -47,6 +57,46 @@ export class MapService {
     });
 
     return newMap;
+  }
+
+  async updateMap(id: string, data: { name: string }) {
+    return this.prisma.map.update({
+      where: { id },
+      data: { name: data.name }
+    });
+  }
+
+  async deleteMap(id: string) {
+    // 1. Delete from Database
+    const map = await this.prisma.map.delete({
+      where: { id }
+    });
+
+    // 2. Clean up maptiles directory
+    const tileDir = path.join(MAP_TILES_DIR, id);
+    if (fs.existsSync(tileDir)) {
+      try {
+        fs.rmSync(tileDir, { recursive: true, force: true });
+      } catch (err) {
+        this.logger.error(`Failed to delete tile directory for map ${id}`, err);
+      }
+    }
+
+    // 3. Clean up raw map files
+    const rawDir = './uploads/raw_maps';
+    if (fs.existsSync(rawDir)) {
+      try {
+        const files = fs.readdirSync(rawDir);
+        const rawFile = files.find(f => f.startsWith(id));
+        if (rawFile) {
+          fs.unlinkSync(path.join(rawDir, rawFile));
+        }
+      } catch (err) {
+        this.logger.error(`Failed to delete raw file for map ${id}`, err);
+      }
+    }
+
+    return map;
   }
 
   private async updateMapStatus(mapId: string, status: string, additionalData: any = {}) {
