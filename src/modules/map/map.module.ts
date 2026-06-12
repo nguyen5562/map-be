@@ -3,6 +3,7 @@ import { MapController } from './map.controller';
 import { MapService } from './map.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
+import { AuthModule } from '../auth/auth.module';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,6 +17,7 @@ if (!fs.existsSync(uploaddir)) {
 
 @Module({
   imports: [
+    AuthModule,
     MulterModule.register({
       storage: diskStorage({
         destination: uploaddir,
@@ -33,3 +35,4 @@ if (!fs.existsSync(uploaddir)) {
   providers: [MapService, PrismaService],
 })
 export class MapModule {}
+

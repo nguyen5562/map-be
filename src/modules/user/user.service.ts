@@ -61,6 +61,29 @@ export class UserService {
     });
   }
 
+  async changePassword(id: string, data: any) {
+    const { oldPassword, newPassword } = data;
+    if (!oldPassword || !newPassword) {
+      throw new BadRequestException('Mật khẩu cũ và mật khẩu mới không được để trống');
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+    if (!user) {
+      throw new BadRequestException('Người dùng không tồn tại');
+    }
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      throw new BadRequestException('Mật khẩu cũ không đúng');
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword },
+    });
+    return { success: true, message: 'Đổi mật khẩu thành công' };
+  }
+
   async remove(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (user?.username === 'admin') {

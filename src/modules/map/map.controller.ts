@@ -1,14 +1,19 @@
-import { Controller, Get, Post, Put, Delete, Body, Query, UploadedFile, UseInterceptors, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, UploadedFile, UseInterceptors, Param, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MapService } from './map.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @Controller('map')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class MapController {
   constructor(private readonly mapService: MapService) {}
 
   @Get('all')
-  getAll(@Query('userId') userId?: string) {
-    return this.mapService.getAllMaps(userId);
+  getAll(@CurrentUser() user: any) {
+    return this.mapService.getAllMaps(user.id);
   }
 
   @Get(':id')
@@ -20,12 +25,12 @@ export class MapController {
   @UseInterceptors(FileInterceptor('file'))
   uploadMap(
     @UploadedFile() file: Express.Multer.File,
-    @Body('userId') userId?: string
+    @CurrentUser() user: any,
   ) {
     if (!file) {
       return { statusCode: 400, message: 'No file uploaded' };
     }
-    return this.mapService.processUploadedMap(file, userId);
+    return this.mapService.processUploadedMap(file, user.id);
   }
 
   @Post('calibrate')
@@ -39,6 +44,7 @@ export class MapController {
     return this.mapService.updateMap(id, body);
   }
 
+  @Roles('admin')
   @Delete(':id')
   deleteMap(@Param('id') id: string) {
     return this.mapService.deleteMap(id);
