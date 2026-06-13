@@ -12,4 +12,8 @@ export class UpdateSectionDto {
   @IsString()
   @IsOptional()
   subtitle?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
 }

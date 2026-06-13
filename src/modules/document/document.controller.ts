@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, UseGuards, Query, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -8,6 +8,8 @@ import { UpdateSectionDto } from './dto/update-section.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { ReorderDocumentsDto } from './dto/reorder-documents.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { extname } from 'path';
 
 @Controller('documents')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -15,8 +17,8 @@ export class DocumentController {
   constructor(private readonly documentService: DocumentService) {}
 
   @Get('sections')
-  getSections() {
-    return this.documentService.getSections();
+  getSections(@Query('type') type?: string) {
+    return this.documentService.getSections(type);
   }
 
   @Post('sections')
@@ -44,6 +46,22 @@ export class DocumentController {
     @Body() body: ReorderDocumentsDto,
   ) {
     return this.documentService.reorderDocuments(sectionId, body.orderedIds);
+  }
+
+  @Post('upload')
+  @Roles('admin')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadFile(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      return { statusCode: 400, message: 'No file uploaded' };
+    }
+    const ext = extname(file.originalname).substring(1).toLowerCase();
+    return {
+      url: `/uploads/documents/${file.filename}`,
+      originalname: file.originalname,
+      filename: file.filename,
+      extension: ext,
+    };
   }
 
   @Post()

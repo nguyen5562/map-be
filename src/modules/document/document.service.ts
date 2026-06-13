@@ -9,8 +9,13 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 export class DocumentService {
   constructor(private prisma: PrismaService) {}
 
-  async getSections() {
+  async getSections(type?: string) {
+    const where: any = {};
+    if (type) {
+      where.type = type;
+    }
     return this.prisma.documentSection.findMany({
+      where,
       include: {
         items: {
           orderBy: { order: 'asc' },
@@ -26,6 +31,7 @@ export class DocumentService {
         roman: data.roman,
         title: data.title,
         subtitle: data.subtitle,
+        type: data.type || 'document',
       },
     });
   }
@@ -37,6 +43,7 @@ export class DocumentService {
         roman: data.roman,
         title: data.title,
         subtitle: data.subtitle,
+        type: data.type,
       },
     });
   }

@@ -39,6 +39,7 @@ model DocumentSection {
   roman     String
   title     String
   subtitle  String?
+  type      String     @default("document") // "document" or "video"
   items     Document[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt

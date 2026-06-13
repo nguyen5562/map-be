@@ -12,4 +12,8 @@ export class CreateSectionDto {
   @IsString()
   @IsOptional()
   subtitle?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
 }
