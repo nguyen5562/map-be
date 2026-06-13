@@ -3,6 +3,8 @@ import sharp = require('sharp');
 import * as fs from 'fs';
 import * as path from 'path';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { ActiveUserData } from '../../common/interfaces/active-user-data.interface';
 
 const MAP_TILES_DIR = './uploads/maptiles';
 
@@ -16,15 +18,12 @@ export class MapService {
     }
   }
 
-  async getAllMaps(userId?: string) {
-    if (userId) {
-      const user = await this.prisma.user.findUnique({ where: { id: userId } });
-      if (user && user.role !== 'admin') {
-        return this.prisma.map.findMany({
-          where: { userId },
-          orderBy: { createdAt: 'desc' }
-        });
-      }
+  async getAllMaps(user: ActiveUserData) {
+    if (user.role !== 'admin') {
+      return this.prisma.map.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' }
+      });
     }
     return this.prisma.map.findMany({
       orderBy: { createdAt: 'desc' }
@@ -99,7 +98,7 @@ export class MapService {
     return map;
   }
 
-  private async updateMapStatus(mapId: string, status: string, additionalData: any = {}) {
+  private async updateMapStatus(mapId: string, status: string, additionalData: Prisma.MapUpdateInput = {}) {
     try {
        await this.prisma.map.update({
          where: { id: mapId },
@@ -143,7 +142,7 @@ export class MapService {
     });
   }
 
-  async saveCalibration(mapId: string, calibrationData: any) {
+  async saveCalibration(mapId: string, calibrationData: Prisma.InputJsonValue) {
     return this.prisma.map.update({
       where: { id: mapId },
       data: { calibration: calibrationData }

@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateSectionDto } from './dto/create-section.dto';
+import { UpdateSectionDto } from './dto/update-section.dto';
+import { CreateDocumentDto } from './dto/create-document.dto';
+import { UpdateDocumentDto } from './dto/update-document.dto';
 
 @Injectable()
 export class DocumentService {
@@ -16,7 +20,7 @@ export class DocumentService {
     });
   }
 
-  async createSection(data: any) {
+  async createSection(data: CreateSectionDto) {
     return this.prisma.documentSection.create({
       data: {
         roman: data.roman,
@@ -26,7 +30,7 @@ export class DocumentService {
     });
   }
 
-  async updateSection(id: string, data: any) {
+  async updateSection(id: string, data: UpdateSectionDto) {
     return this.prisma.documentSection.update({
       where: { id },
       data: {
@@ -43,7 +47,7 @@ export class DocumentService {
     });
   }
 
-  async createDocument(data: any) {
+  async createDocument(data: CreateDocumentDto) {
     // Assign order = max current order + 1 within the section
     const maxOrderDoc = await this.prisma.document.findFirst({
       where: { sectionId: data.sectionId },
@@ -64,7 +68,7 @@ export class DocumentService {
     });
   }
 
-  async updateDocument(id: string, data: any) {
+  async updateDocument(id: string, data: UpdateDocumentDto) {
     return this.prisma.document.update({
       where: { id },
       data: {

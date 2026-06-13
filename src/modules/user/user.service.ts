@@ -1,6 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class UserService {
@@ -20,7 +24,7 @@ export class UserService {
     });
   }
 
-  async create(data: any) {
+  async create(data: CreateUserDto) {
     const existing = await this.prisma.user.findUnique({
       where: { username: data.username },
     });
@@ -38,7 +42,7 @@ export class UserService {
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: UpdateUserDto) {
     if (data.username) {
       const existing = await this.prisma.user.findFirst({
         where: { username: data.username, NOT: { id } },
@@ -47,7 +51,7 @@ export class UserService {
         throw new BadRequestException('Tên đăng nhập đã tồn tại');
       }
     }
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       username: data.username,
       name: data.name,
       role: data.role,
@@ -61,11 +65,8 @@ export class UserService {
     });
   }
 
-  async changePassword(id: string, data: any) {
+  async changePassword(id: string, data: ChangePasswordDto) {
     const { oldPassword, newPassword } = data;
-    if (!oldPassword || !newPassword) {
-      throw new BadRequestException('Mật khẩu cũ và mật khẩu mới không được để trống');
-    }
     const user = await this.prisma.user.findUnique({
       where: { id },
     });

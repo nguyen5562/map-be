@@ -3,6 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { Response, Request } from 'express';
 import * as bcrypt from 'bcryptjs';
+import { LoginDto } from './dto/login.dto';
+import { TokenPayload } from '../../common/interfaces/active-user-data.interface';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +13,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async login(data: any, res: Response) {
+  async login(data: LoginDto, res: Response) {
     const user = await this.prisma.user.findUnique({
       where: { username: data.username },
     });
@@ -62,7 +64,7 @@ export class AuthService {
       throw new UnauthorizedException('Không có refresh token');
     }
 
-    let payload: any;
+    let payload: TokenPayload;
     try {
       payload = this.jwtService.verify(token, {
         secret: process.env.REFRESH_TOKEN_SECRET,

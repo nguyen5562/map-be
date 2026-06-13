@@ -3,13 +3,15 @@ import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { LoginDto } from './dto/login.dto';
+import type { ActiveUserData } from '../../common/interfaces/active-user-data.interface';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  login(@Body() data: any, @Res({ passthrough: true }) res: Response) {
+  login(@Body() data: LoginDto, @Res({ passthrough: true }) res: Response) {
     return this.authService.login(data, res);
   }
 
@@ -25,7 +27,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(@CurrentUser() user: any) {
+  getMe(@CurrentUser() user: ActiveUserData) {
     return this.authService.getMe(user.id);
   }
 }

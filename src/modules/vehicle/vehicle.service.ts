@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
 @Injectable()
 export class VehicleService {
@@ -11,29 +13,29 @@ export class VehicleService {
     });
   }
 
-  async create(data: any) {
+  async create(data: CreateVehicleDto) {
     return this.prisma.vehicle.create({
       data: {
         id: data.id,
         name: data.name,
         desc: data.desc,
-        l: parseFloat(data.l),
-        r: parseFloat(data.r),
-        t: parseFloat(data.t),
+        l: data.l,
+        r: data.r,
+        t: data.t,
         materials: data.materials,
       },
     });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: UpdateVehicleDto) {
     return this.prisma.vehicle.update({
       where: { id },
       data: {
         name: data.name,
         desc: data.desc,
-        l: data.l !== undefined ? parseFloat(data.l) : undefined,
-        r: data.r !== undefined ? parseFloat(data.r) : undefined,
-        t: data.t !== undefined ? parseFloat(data.t) : undefined,
+        l: data.l,
+        r: data.r,
+        t: data.t,
         materials: data.materials,
       },
     });

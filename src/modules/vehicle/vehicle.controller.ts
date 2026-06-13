@@ -3,6 +3,8 @@ import { VehicleService } from './vehicle.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CreateVehicleDto } from './dto/create-vehicle.dto';
+import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
 @Controller('vehicles')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -16,13 +18,13 @@ export class VehicleController {
 
   @Roles('admin')
   @Post()
-  create(@Body() data: any) {
+  create(@Body() data: CreateVehicleDto) {
     return this.vehicleService.create(data);
   }
 
   @Roles('admin')
   @Put(':id')
-  update(@Param('id') id: string, @Body() data: any) {
+  update(@Param('id') id: string, @Body() data: UpdateVehicleDto) {
     return this.vehicleService.update(id, data);
   }
 
