@@ -6,6 +6,7 @@ import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DocumentModule } from './modules/document/document.module';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
 import { PrismaService } from './modules/prisma/prisma.service';
 
 @Module({
@@ -19,6 +20,7 @@ import { PrismaService } from './modules/prisma/prisma.service';
     AuthModule,
     DocumentModule,
     VehicleModule,
+    FeedbackModule,
   ],
   controllers: [],
   providers: [PrismaService],

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `Feedback` ADD COLUMN `adminRead` BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN `userRead` BOOLEAN NOT NULL DEFAULT true;

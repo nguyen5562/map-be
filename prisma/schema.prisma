@@ -30,6 +30,8 @@ model User {
   name      String?
   role      String   @default("user")
   maps      Map[]
+  feedbacks Feedback[]
+  replies   FeedbackReply[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -70,4 +72,34 @@ model Vehicle {
   materials String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Feedback {
+  id         String          @id @default(uuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String
+  title      String
+  content    String          @db.Text
+  status     String          @default("PENDING") // "PENDING", "RESOLVED"
+  adminRead  Boolean         @default(false)
+  userRead   Boolean         @default(true)
+  replies    FeedbackReply[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([userId])
+}
+
+model FeedbackReply {
+  id         String   @id @default(uuid())
+  feedbackId String
+  feedback   Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([feedbackId])
+  @@index([userId])
 }
