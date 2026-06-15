@@ -114,24 +114,29 @@ export class MapService {
     const outputDir = path.join(MAP_TILES_DIR, mapId);
 
     // Get original metadata
-    let image = sharp(filePath);
-    let metadata = await image.metadata();
+    const image = sharp(filePath);
+    const metadata = await image.metadata();
     let width = metadata.width || 0;
     let height = metadata.height || 0;
     
     // Giới hạn độ phân giải tối đa cho zoom 6 (256 * 2^6 = 16384)
     const MAX_RESOLUTION = 16384;
+    let processedImage = sharp(filePath);
+
     if (width > MAX_RESOLUTION || height > MAX_RESOLUTION) {
+      await this.updateMapStatus(mapId, 'resizing');
       this.logger.log(`Co nhỏ bản đồ từ ${width}x${height} về giới hạn ${MAX_RESOLUTION}px (Cấp zoom 6)`);
-      const resizedBuffer = await image
-        .resize(MAX_RESOLUTION, MAX_RESOLUTION, { fit: 'inside' })
-        .toBuffer();
       
-      image = sharp(resizedBuffer);
-      metadata = await image.metadata();
-      width = metadata.width || 0;
-      height = metadata.height || 0;
+      // Tính toán kích thước mới bằng toán học (giữ nguyên tỷ lệ)
+      const scale = Math.min(MAX_RESOLUTION / width, MAX_RESOLUTION / height);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+
+      // Tạo pipeline resize
+      processedImage = sharp(filePath).resize(MAX_RESOLUTION, MAX_RESOLUTION, { fit: 'inside' });
     }
+
+    await this.updateMapStatus(mapId, 'tiling');
 
     const maxDim = Math.max(width, height);
     let maxNativeZoom = 0;
@@ -139,8 +144,8 @@ export class MapService {
         maxNativeZoom = Math.ceil(Math.log2(maxDim / 256));
     }
 
-    // Generate Tiles
-    await image
+    // Generate Tiles (Chạy trực tiếp từ pipeline)
+    await processedImage
       .png({ quality: 80 })
       .tile({
         size: 256,
