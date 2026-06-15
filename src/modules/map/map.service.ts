@@ -114,18 +114,33 @@ export class MapService {
     const outputDir = path.join(MAP_TILES_DIR, mapId);
 
     // Get original metadata
-    const metadata = await sharp(filePath).metadata();
-    const width = metadata.width;
-    const height = metadata.height;
+    let image = sharp(filePath);
+    let metadata = await image.metadata();
+    let width = metadata.width || 0;
+    let height = metadata.height || 0;
     
-    const maxDim = Math.max(width || 0, height || 0);
+    // Giới hạn độ phân giải tối đa cho zoom 6 (256 * 2^6 = 16384)
+    const MAX_RESOLUTION = 16384;
+    if (width > MAX_RESOLUTION || height > MAX_RESOLUTION) {
+      this.logger.log(`Co nhỏ bản đồ từ ${width}x${height} về giới hạn ${MAX_RESOLUTION}px (Cấp zoom 6)`);
+      const resizedBuffer = await image
+        .resize(MAX_RESOLUTION, MAX_RESOLUTION, { fit: 'inside' })
+        .toBuffer();
+      
+      image = sharp(resizedBuffer);
+      metadata = await image.metadata();
+      width = metadata.width || 0;
+      height = metadata.height || 0;
+    }
+
+    const maxDim = Math.max(width, height);
     let maxNativeZoom = 0;
     if (maxDim > 0) {
         maxNativeZoom = Math.ceil(Math.log2(maxDim / 256));
     }
 
     // Generate Tiles
-    await sharp(filePath)
+    await image
       .png({ quality: 80 })
       .tile({
         size: 256,

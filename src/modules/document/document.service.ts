@@ -4,6 +4,8 @@ import { CreateSectionDto } from './dto/create-section.dto';
 import { UpdateSectionDto } from './dto/update-section.dto';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class DocumentService {
@@ -49,6 +51,24 @@ export class DocumentService {
   }
 
   async removeSection(id: string) {
+    // Tìm tất cả các tài liệu trong phần này để xóa file vật lý trước
+    const docs = await this.prisma.document.findMany({
+      where: { sectionId: id },
+    });
+    for (const doc of docs) {
+      if (doc.url) {
+        const normalizedPath = doc.url.startsWith('/') ? doc.url.substring(1) : doc.url;
+        const filePath = path.join('.', normalizedPath);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+          } catch (err) {
+            // Bỏ qua lỗi nếu không tìm thấy file hoặc lỗi quyền ghi
+          }
+        }
+      }
+    }
+
     return this.prisma.documentSection.delete({
       where: { id },
     });
@@ -102,6 +122,22 @@ export class DocumentService {
   }
 
   async removeDocument(id: string) {
+    const doc = await this.prisma.document.findUnique({
+      where: { id },
+    });
+
+    if (doc && doc.url) {
+      const normalizedPath = doc.url.startsWith('/') ? doc.url.substring(1) : doc.url;
+      const filePath = path.join('.', normalizedPath);
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (err) {
+          // Bỏ qua lỗi
+        }
+      }
+    }
+
     return this.prisma.document.delete({
       where: { id },
     });
