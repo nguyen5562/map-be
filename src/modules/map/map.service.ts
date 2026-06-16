@@ -81,9 +81,25 @@ export class MapService {
       }
     }
 
-    // 3. Clean up raw map files
+    // 3. Clean up raw map files - Tối ưu: Thử các đuôi mở rộng phổ biến trước (O(1)), nếu không thấy mới quét thư mục (Fallback)
     const rawDir = './uploads/raw_maps';
-    if (fs.existsSync(rawDir)) {
+    let deleted = false;
+    const commonExts = ['.png', '.jpg', '.jpeg', '.webp', '.tiff', '.bmp', '.gif'];
+    
+    for (const ext of commonExts) {
+      const rawFilePath = path.join(rawDir, `${id}${ext}`);
+      if (fs.existsSync(rawFilePath)) {
+        try {
+          fs.unlinkSync(rawFilePath);
+          deleted = true;
+        } catch (err) {
+          this.logger.error(`Failed to delete raw file for map ${id} (${ext})`, err);
+        }
+        break;
+      }
+    }
+
+    if (!deleted && fs.existsSync(rawDir)) {
       try {
         const files = fs.readdirSync(rawDir);
         const rawFile = files.find(f => f.startsWith(id));
@@ -91,7 +107,7 @@ export class MapService {
           fs.unlinkSync(path.join(rawDir, rawFile));
         }
       } catch (err) {
-        this.logger.error(`Failed to delete raw file for map ${id}`, err);
+        this.logger.error(`Failed to delete raw file for map ${id} via directory scan`, err);
       }
     }
 
@@ -113,15 +129,15 @@ export class MapService {
     this.logger.log(`Starting processing map: ${mapId}`);
     const outputDir = path.join(MAP_TILES_DIR, mapId);
 
-    // Get original metadata
-    const image = sharp(filePath);
+    // Get original metadata - Chỉ khởi tạo sharp đúng 1 lần duy nhất
+    const image = sharp(filePath, { limitInputPixels: false });
     const metadata = await image.metadata();
     let width = metadata.width || 0;
     let height = metadata.height || 0;
     
     // Giới hạn độ phân giải tối đa cho zoom 6 (256 * 2^6 = 16384)
     const MAX_RESOLUTION = 16384;
-    let processedImage = sharp(filePath);
+    let processedImage = image;
 
     if (width > MAX_RESOLUTION || height > MAX_RESOLUTION) {
       await this.updateMapStatus(mapId, 'resizing');
@@ -132,8 +148,8 @@ export class MapService {
       width = Math.round(width * scale);
       height = Math.round(height * scale);
 
-      // Tạo pipeline resize
-      processedImage = sharp(filePath).resize(MAX_RESOLUTION, MAX_RESOLUTION, { fit: 'inside' });
+      // Thêm bước resize vào pipeline hiện tại mà không cần tạo instance mới
+      processedImage = image.resize(MAX_RESOLUTION, MAX_RESOLUTION, { fit: 'inside' });
     }
 
     await this.updateMapStatus(mapId, 'tiling');

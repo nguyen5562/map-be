@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { Subject, Observable } from 'rxjs';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class FeedbackService {
@@ -102,19 +103,20 @@ export class FeedbackService {
   }
 
   async updateStatus(feedbackId: string, status: string) {
-    const feedback = await this.prisma.feedback.findUnique({
-      where: { id: feedbackId },
-    });
-    if (!feedback) {
-      throw new NotFoundException('Không tìm thấy phản hồi');
-    }
-    const result = await this.prisma.feedback.update({
-      where: { id: feedbackId },
-      data: { status },
-    });
+    try {
+      const result = await this.prisma.feedback.update({
+        where: { id: feedbackId },
+        data: { status },
+      });
 
-    this.triggerSse(result.userId);
-    return result;
+      this.triggerSse(result.userId);
+      return result;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException('Không tìm thấy phản hồi');
+      }
+      throw error;
+    }
   }
 
   async addReply(userId: string, feedbackId: string, dto: CreateReplyDto, isAdmin: boolean) {
@@ -129,32 +131,38 @@ export class FeedbackService {
       throw new ForbiddenException('Bạn không có quyền phản hồi yêu cầu này');
     }
 
-    // Update feedback read flags
-    await this.prisma.feedback.update({
+    // Tối ưu hóa: Update flags và Create reply trong 1 lần gọi database duy nhất
+    const result = await this.prisma.feedback.update({
       where: { id: feedbackId },
       data: {
         adminRead: isAdmin ? true : false,
         userRead: isAdmin ? false : true,
+        replies: {
+          create: {
+            userId,
+            content: dto.content,
+          },
+        },
       },
-    });
-
-    const reply = await this.prisma.feedbackReply.create({
-      data: {
-        feedbackId,
-        userId,
-        content: dto.content,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            role: true,
+      select: {
+        replies: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                name: true,
+                role: true,
+              },
+            },
           },
         },
       },
     });
+
+    const reply = result.replies[0];
 
     // Notify other party
     if (isAdmin) {
@@ -167,22 +175,34 @@ export class FeedbackService {
   }
 
   async markAsRead(feedbackId: string, userId: string, isAdmin: boolean) {
+    if (isAdmin) {
+      try {
+        return await this.prisma.feedback.update({
+          where: { id: feedbackId },
+          data: { adminRead: true },
+        });
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+          throw new NotFoundException('Không tìm thấy phản hồi');
+        }
+        throw error;
+      }
+    }
+
+    // Nếu không phải admin, kiểm tra quyền sở hữu
     const feedback = await this.prisma.feedback.findUnique({
       where: { id: feedbackId },
     });
     if (!feedback) {
       throw new NotFoundException('Không tìm thấy phản hồi');
     }
-    if (!isAdmin && feedback.userId !== userId) {
+    if (feedback.userId !== userId) {
       throw new ForbiddenException('Bạn không có quyền truy cập phản hồi này');
     }
 
     return this.prisma.feedback.update({
       where: { id: feedbackId },
-      data: {
-        adminRead: isAdmin ? true : feedback.adminRead,
-        userRead: !isAdmin ? true : feedback.userRead,
-      },
+      data: { userRead: true },
     });
   }
 
