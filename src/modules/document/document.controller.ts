@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Patch, Delete, Body, Param, UseGuards, Query, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Body, Param, UseGuards, Query, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -53,9 +53,21 @@ export class DocumentController {
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
-      return { statusCode: 400, message: 'No file uploaded' };
+      throw new BadRequestException('No file uploaded');
     }
     const ext = extname(file.originalname).substring(1).toLowerCase();
+    
+    // Validate file extensions
+    const allowedExtensions = [
+      'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', // documents
+      'mp4', 'webm', 'ogg', // videos
+      'png', 'jpg', 'jpeg', 'webp', 'svg', // images
+      'dwg', 'dxf', 'cdr' // drawings/design files
+    ];
+    if (!allowedExtensions.includes(ext)) {
+      throw new BadRequestException('Định dạng tệp tin không được hỗ trợ.');
+    }
+
     return {
       url: `/uploads/documents/${file.filename}`,
       originalname: file.originalname,
