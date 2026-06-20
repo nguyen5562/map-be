@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Vehicle` ADD COLUMN `unit` VARCHAR(191) NOT NULL DEFAULT 'cái';

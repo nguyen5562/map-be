@@ -29,4 +29,8 @@ export class CreateVehicleDto {
   @IsString()
   @IsOptional()
   materials?: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Đơn vị tính không được để trống' })
+  unit: string;
 }

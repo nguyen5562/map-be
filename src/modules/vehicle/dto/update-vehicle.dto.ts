@@ -28,4 +28,8 @@ export class UpdateVehicleDto {
   @IsString()
   @IsOptional()
   materials?: string;
+
+  @IsString()
+  @IsOptional()
+  unit?: string;
 }

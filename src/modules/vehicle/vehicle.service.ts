@@ -23,6 +23,7 @@ export class VehicleService {
         r: data.r,
         t: data.t,
         materials: data.materials,
+        unit: data.unit,
       },
     });
   }
@@ -37,6 +38,7 @@ export class VehicleService {
         r: data.r,
         t: data.t,
         materials: data.materials,
+        unit: data.unit,
       },
     });
   }
