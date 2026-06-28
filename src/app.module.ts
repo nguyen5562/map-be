@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DocumentModule } from './modules/document/document.module';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
+import { SimulationSessionModule } from './modules/simulation-session/simulation-session.module';
 import { PrismaService } from './modules/prisma/prisma.service';
 
 @Module({
@@ -21,6 +22,7 @@ import { PrismaService } from './modules/prisma/prisma.service';
     DocumentModule,
     VehicleModule,
     FeedbackModule,
+    SimulationSessionModule,
   ],
   controllers: [],
   providers: [PrismaService],

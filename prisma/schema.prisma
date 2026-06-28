@@ -24,16 +24,30 @@ model Map {
 }
 
 model User {
+  id                 String               @id @default(uuid())
+  username           String               @unique
+  password           String
+  name               String?
+  role               String               @default("user")
+  maps               Map[]
+  feedbacks          Feedback[]
+  replies            FeedbackReply[]
+  simulationSessions SimulationSession[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+model SimulationSession {
   id        String   @id @default(uuid())
-  username  String   @unique
-  password  String
-  name      String?
-  role      String   @default("user")
-  maps      Map[]
-  feedbacks Feedback[]
-  replies   FeedbackReply[]
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mapId     String?
+  data      Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model DocumentSection {
