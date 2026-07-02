@@ -57,6 +57,15 @@ export class DocumentController {
     return this.documentService.renameFolder(sectionId, body.oldName, body.newName);
   }
 
+  @Delete('sections/:sectionId/folders/delete')
+  @Roles('admin')
+  deleteFolder(
+    @Param('sectionId') sectionId: string,
+    @Query('folderName') folderName: string,
+  ) {
+    return this.documentService.deleteFolder(sectionId, folderName);
+  }
+
   @Post('upload')
   @Roles('admin')
   @UseInterceptors(FileInterceptor('file'))

@@ -130,6 +130,30 @@ export class DocumentService {
     });
   }
 
+  async deleteFolder(sectionId: string, folderName: string) {
+    const docs = await this.prisma.document.findMany({
+      where: { sectionId, folder: folderName },
+    });
+
+    for (const doc of docs) {
+      if (doc.url) {
+        const normalizedPath = doc.url.startsWith('/') ? doc.url.substring(1) : doc.url;
+        const filePath = path.join('.', normalizedPath);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+          } catch (err) {
+            // Bỏ qua lỗi
+          }
+        }
+      }
+    }
+
+    return this.prisma.document.deleteMany({
+      where: { sectionId, folder: folderName },
+    });
+  }
+
   async removeDocument(id: string) {
     const doc = await this.prisma.document.findUnique({
       where: { id },
