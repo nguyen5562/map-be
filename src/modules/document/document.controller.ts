@@ -48,6 +48,15 @@ export class DocumentController {
     return this.documentService.reorderDocuments(sectionId, body.orderedIds);
   }
 
+  @Put('sections/:sectionId/folders/rename')
+  @Roles('admin')
+  renameFolder(
+    @Param('sectionId') sectionId: string,
+    @Body() body: { oldName: string; newName: string },
+  ) {
+    return this.documentService.renameFolder(sectionId, body.oldName, body.newName);
+  }
+
   @Post('upload')
   @Roles('admin')
   @UseInterceptors(FileInterceptor('file'))
@@ -56,17 +65,6 @@ export class DocumentController {
       throw new BadRequestException('No file uploaded');
     }
     const ext = extname(file.originalname).substring(1).toLowerCase();
-    
-    // Validate file extensions
-    const allowedExtensions = [
-      'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', // documents
-      'mp4', 'webm', 'ogg', // videos
-      'png', 'jpg', 'jpeg', 'webp', 'svg', // images
-      'dwg', 'dxf', 'cdr' // drawings/design files
-    ];
-    if (!allowedExtensions.includes(ext)) {
-      throw new BadRequestException('Định dạng tệp tin không được hỗ trợ.');
-    }
 
     return {
       url: `/uploads/documents/${file.filename}`,

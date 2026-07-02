@@ -20,4 +20,8 @@ export class CreateDocumentDto {
   @IsString()
   @IsNotEmpty({ message: 'sectionId không được để trống' })
   sectionId: string;
+
+  @IsString()
+  @IsOptional()
+  folder?: string;
 }

@@ -67,6 +67,7 @@ model Document {
   type       String          // "pdf", "video", "drawing", "doc", "word"
   classified Boolean         @default(false)
   url        String?
+  folder     String?
   order      Int             @default(0)
   sectionId  String
   section    DocumentSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)

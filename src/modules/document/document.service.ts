@@ -89,6 +89,7 @@ export class DocumentService {
         type: data.type,
         classified: data.classified || false,
         url: data.url,
+        folder: data.folder,
         order: nextOrder,
         sectionId: data.sectionId,
       },
@@ -103,6 +104,7 @@ export class DocumentService {
         type: data.type,
         classified: data.classified,
         url: data.url,
+        folder: data.folder,
         sectionId: data.sectionId,
       },
     });
@@ -119,6 +121,13 @@ export class DocumentService {
       ),
     );
     return { success: true };
+  }
+
+  async renameFolder(sectionId: string, oldName: string, newName: string) {
+    return this.prisma.document.updateMany({
+      where: { sectionId, folder: oldName },
+      data: { folder: newName },
+    });
   }
 
   async removeDocument(id: string) {

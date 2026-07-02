@@ -20,4 +20,8 @@ export class UpdateDocumentDto {
   @IsString()
   @IsOptional()
   sectionId?: string;
+
+  @IsString()
+  @IsOptional()
+  folder?: string;
 }
