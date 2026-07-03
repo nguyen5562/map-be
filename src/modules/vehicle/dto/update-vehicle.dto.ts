@@ -4,6 +4,10 @@ import { Type } from 'class-transformer';
 export class UpdateVehicleDto {
   @IsString()
   @IsOptional()
+  id?: string;
+
+  @IsString()
+  @IsOptional()
   name?: string;
 
   @IsString()
