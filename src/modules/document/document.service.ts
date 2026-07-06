@@ -19,7 +19,16 @@ export class DocumentService {
     return this.prisma.documentSection.findMany({
       where,
       include: {
+        folders: {
+          orderBy: { order: 'asc' },
+          include: {
+            items: {
+              orderBy: { order: 'asc' },
+            },
+          },
+        },
         items: {
+          where: { folderId: null },
           orderBy: { order: 'asc' },
         },
       },
@@ -75,9 +84,40 @@ export class DocumentService {
   }
 
   async createDocument(data: CreateDocumentDto) {
-    // Assign order = max current order + 1 within the section
+    let folderId = data.folderId || null;
+    let folderName = data.folder || null;
+
+    if (!folderId && folderName) {
+      // Find or create folder by name
+      let folderRecord = await this.prisma.documentFolder.findFirst({
+        where: { name: folderName, sectionId: data.sectionId },
+      });
+
+      if (!folderRecord) {
+        const maxOrderFolder = await this.prisma.documentFolder.findFirst({
+          where: { sectionId: data.sectionId },
+          orderBy: { order: 'desc' },
+          select: { order: true },
+        });
+        const nextFolderOrder = (maxOrderFolder?.order ?? -1) + 1;
+
+        folderRecord = await this.prisma.documentFolder.create({
+          data: {
+            name: folderName,
+            sectionId: data.sectionId,
+            order: nextFolderOrder,
+          },
+        });
+      }
+      folderId = folderRecord.id;
+    }
+
+    // Assign order = max current order + 1 within the folder or root section
     const maxOrderDoc = await this.prisma.document.findFirst({
-      where: { sectionId: data.sectionId },
+      where: { 
+        sectionId: data.sectionId,
+        folderId: folderId,
+      },
       orderBy: { order: 'desc' },
       select: { order: true },
     });
@@ -89,7 +129,7 @@ export class DocumentService {
         type: data.type,
         classified: data.classified || false,
         url: data.url,
-        folder: data.folder,
+        folderId: folderId,
         order: nextOrder,
         sectionId: data.sectionId,
       },
@@ -97,42 +137,114 @@ export class DocumentService {
   }
 
   async updateDocument(id: string, data: UpdateDocumentDto) {
+    const updateData: any = {
+      title: data.title,
+      type: data.type,
+      classified: data.classified,
+      url: data.url,
+      sectionId: data.sectionId,
+    };
+
+    if (data.folderId !== undefined) {
+      updateData.folderId = data.folderId || null;
+    } else if (data.folder !== undefined) {
+      // If only folder name is passed, find or create it
+      let folderId: string | null = null;
+      const folderName = data.folder || null;
+      if (folderName && data.sectionId) {
+        let folderRecord = await this.prisma.documentFolder.findFirst({
+          where: { name: folderName, sectionId: data.sectionId },
+        });
+        if (!folderRecord) {
+          const maxOrderFolder = await this.prisma.documentFolder.findFirst({
+            where: { sectionId: data.sectionId },
+            orderBy: { order: 'desc' },
+            select: { order: true },
+          });
+          const nextFolderOrder = (maxOrderFolder?.order ?? -1) + 1;
+          folderRecord = await this.prisma.documentFolder.create({
+            data: {
+              name: folderName,
+              sectionId: data.sectionId,
+              order: nextFolderOrder,
+            },
+          });
+        }
+        folderId = folderRecord.id;
+      }
+      updateData.folderId = folderId;
+    }
+
     return this.prisma.document.update({
       where: { id },
-      data: {
-        title: data.title,
-        type: data.type,
-        classified: data.classified,
-        url: data.url,
-        folder: data.folder,
-        sectionId: data.sectionId,
-      },
+      data: updateData,
     });
   }
 
   async reorderDocuments(sectionId: string, orderedIds: string[]) {
-    // Update each document's order field based on its index in the array
-    await Promise.all(
-      orderedIds.map((id, index) =>
-        this.prisma.document.update({
+    // Update each document or folder's order field based on its index in the array
+    for (let index = 0; index < orderedIds.length; index++) {
+      const id = orderedIds[index];
+      
+      // Check if it is a folder
+      const folderExists = await this.prisma.documentFolder.findFirst({
+        where: { id, sectionId },
+        select: { id: true },
+      });
+
+      if (folderExists) {
+        await this.prisma.documentFolder.update({
           where: { id },
           data: { order: index },
-        }),
-      ),
-    );
+        });
+      } else {
+        await this.prisma.document.update({
+          where: { id, sectionId },
+          data: { order: index },
+        });
+      }
+    }
     return { success: true };
   }
 
-  async renameFolder(sectionId: string, oldName: string, newName: string) {
-    return this.prisma.document.updateMany({
-      where: { sectionId, folder: oldName },
-      data: { folder: newName },
+  async renameFolder(sectionId: string, folderIdOrOldName: string, newName: string) {
+    const folder = await this.prisma.documentFolder.findFirst({
+      where: {
+        OR: [
+          { id: folderIdOrOldName, sectionId },
+          { name: folderIdOrOldName, sectionId },
+        ],
+      },
     });
+
+    if (!folder) {
+      throw new Error('Không tìm thấy thư mục');
+    }
+
+    const updatedFolder = await this.prisma.documentFolder.update({
+      where: { id: folder.id },
+      data: { name: newName },
+    });
+
+    return updatedFolder;
   }
 
-  async deleteFolder(sectionId: string, folderName: string) {
+  async deleteFolder(sectionId: string, folderIdOrName: string) {
+    const folder = await this.prisma.documentFolder.findFirst({
+      where: {
+        OR: [
+          { id: folderIdOrName, sectionId },
+          { name: folderIdOrName, sectionId },
+        ],
+      },
+    });
+
+    if (!folder) {
+      throw new Error('Không tìm thấy thư mục');
+    }
+
     const docs = await this.prisma.document.findMany({
-      where: { sectionId, folder: folderName },
+      where: { folderId: folder.id, sectionId },
     });
 
     for (const doc of docs) {
@@ -149,8 +261,14 @@ export class DocumentService {
       }
     }
 
-    return this.prisma.document.deleteMany({
-      where: { sectionId, folder: folderName },
+    // Xóa các tài liệu bên trong trước
+    await this.prisma.document.deleteMany({
+      where: { folderId: folder.id, sectionId },
+    });
+
+    // Xóa thư mục
+    return this.prisma.documentFolder.delete({
+      where: { id: folder.id },
     });
   }
 

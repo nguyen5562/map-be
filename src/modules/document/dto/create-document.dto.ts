@@ -24,4 +24,8 @@ export class CreateDocumentDto {
   @IsString()
   @IsOptional()
   folder?: string;
+
+  @IsString()
+  @IsOptional()
+  folderId?: string;
 }

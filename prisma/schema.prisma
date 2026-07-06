@@ -51,30 +51,46 @@ model SimulationSession {
 }
 
 model DocumentSection {
-  id        String     @id @default(uuid())
+  id        String           @id @default(uuid())
   roman     String
   title     String
   subtitle  String?
-  type      String     @default("document") // "document" or "video"
+  type      String           @default("document") // "document" or "video"
   items     Document[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  folders   DocumentFolder[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model DocumentFolder {
+  id        String          @id @default(uuid())
+  name      String
+  order     Int             @default(0)
+  sectionId String
+  section   DocumentSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  items     Document[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([sectionId])
 }
 
 model Document {
-  id         String          @id @default(uuid())
-  title      String
-  type       String          // "pdf", "video", "drawing", "doc", "word"
-  classified Boolean         @default(false)
-  url        String?
-  folder     String?
-  order      Int             @default(0)
-  sectionId  String
-  section    DocumentSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id             String          @id @default(uuid())
+  title          String
+  type           String          // "pdf", "video", "drawing", "doc", "word"
+  classified     Boolean         @default(false)
+  url            String?
+  folderId       String?
+  folderRelation DocumentFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  order          Int             @default(0)
+  sectionId      String
+  section        DocumentSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([sectionId])
+  @@index([folderId])
 }
 
 model Vehicle {

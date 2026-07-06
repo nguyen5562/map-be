@@ -52,18 +52,27 @@ export class DocumentController {
   @Roles('admin')
   renameFolder(
     @Param('sectionId') sectionId: string,
-    @Body() body: { oldName: string; newName: string },
+    @Body() body: { folderId?: string; oldName?: string; newName: string },
   ) {
-    return this.documentService.renameFolder(sectionId, body.oldName, body.newName);
+    const folderIdOrOldName = body.folderId || body.oldName;
+    if (!folderIdOrOldName) {
+      throw new BadRequestException('folderId hoặc oldName không được để trống');
+    }
+    return this.documentService.renameFolder(sectionId, folderIdOrOldName, body.newName);
   }
 
   @Delete('sections/:sectionId/folders/delete')
   @Roles('admin')
   deleteFolder(
     @Param('sectionId') sectionId: string,
-    @Query('folderName') folderName: string,
+    @Query('folderId') folderId?: string,
+    @Query('folderName') folderName?: string,
   ) {
-    return this.documentService.deleteFolder(sectionId, folderName);
+    const folderIdOrName = folderId || folderName;
+    if (!folderIdOrName) {
+      throw new BadRequestException('folderId hoặc folderName không được để trống');
+    }
+    return this.documentService.deleteFolder(sectionId, folderIdOrName);
   }
 
   @Post('upload')

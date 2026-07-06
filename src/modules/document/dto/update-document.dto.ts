@@ -24,4 +24,8 @@ export class UpdateDocumentDto {
   @IsString()
   @IsOptional()
   folder?: string;
+
+  @IsString()
+  @IsOptional()
+  folderId?: string;
 }
