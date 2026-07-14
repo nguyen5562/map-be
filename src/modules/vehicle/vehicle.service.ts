@@ -24,6 +24,7 @@ export class VehicleService {
         t: data.t,
         materials: data.materials,
         unit: data.unit,
+        isCar: data.isCar ?? false,
       },
     });
   }
@@ -53,6 +54,7 @@ export class VehicleService {
             t: data.t ?? 0,
             materials: data.materials,
             unit: data.unit ?? 'cái',
+            isCar: data.isCar ?? false,
           },
         });
 
@@ -146,6 +148,7 @@ export class VehicleService {
         t: data.t,
         materials: data.materials,
         unit: data.unit,
+        isCar: data.isCar,
       },
     });
   }

@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateVehicleDto {
@@ -36,4 +36,8 @@ export class UpdateVehicleDto {
   @IsString()
   @IsOptional()
   unit?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isCar?: boolean;
 }

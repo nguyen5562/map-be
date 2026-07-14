@@ -102,6 +102,7 @@ model Vehicle {
   t         Float
   materials String?  @db.Text
   unit      String   @default("cái")
+  isCar     Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

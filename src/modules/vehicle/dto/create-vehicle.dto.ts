@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateVehicleDto {
@@ -33,4 +33,8 @@ export class CreateVehicleDto {
   @IsString()
   @IsNotEmpty({ message: 'Đơn vị tính không được để trống' })
   unit: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isCar?: boolean;
 }
