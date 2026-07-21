@@ -15,6 +15,6 @@ async function bootstrap() {
     credentials: true, // bắt buộc để cookie được gửi qua
   });
   app.setGlobalPrefix('api');
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '127.0.0.1');
 }
 bootstrap();
