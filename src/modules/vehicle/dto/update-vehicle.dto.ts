@@ -40,4 +40,7 @@ export class UpdateVehicleDto {
   @IsBoolean()
   @IsOptional()
   isCar?: boolean;
+
+  @IsOptional()
+  consumptionConfig?: any;
 }

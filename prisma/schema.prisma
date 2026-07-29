@@ -103,6 +103,7 @@ model Vehicle {
   materials String?  @db.Text
   unit      String   @default("cái")
   isCar     Boolean  @default(false)
+  consumptionConfig Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
